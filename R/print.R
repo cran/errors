@@ -1,7 +1,7 @@
 #' @export
 print.errors <- function(x, ...) {
   if (is.array(x) || length(x) > 1L) {
-    err <- paste(errors(x)[1:min(5, length(errors(x)))], collapse=" ")
+    err <- paste(format(errors(x)[1:min(5, length(errors(x)))]), collapse=" ")
     if (length(errors(x)) > 5L)
       err <- paste(err, "...")
     cat("errors: ", err, "\n", sep = "")
@@ -40,11 +40,10 @@ format.errors = function(x,
   prepend <- rep("", length(x))
   append <- rep("", length(x))
 
-  exponent <- get_exponent(x)
-  value_digits <- digits - get_exponent(errors(x))
-
   err <- signif(errors(x), digits)
-  value <- signif(.v(x), exponent + value_digits)
+  exponent <- get_exponent(x)
+  value_digits <- ifelse(err, digits - get_exponent(err), getOption("digits"))
+  value <- ifelse(err, signif(.v(x), exponent + value_digits), .v(x))
 
   cond <- scientific || (exponent > 4 || exponent < -3)
   err[cond] <- err[cond] * 10^(-exponent[cond])
@@ -63,9 +62,12 @@ format.errors = function(x,
   }
   append[cond] <- paste(append[cond], "e", exponent[cond], sep="")
 
-  err <- formatC(err, format="fg", digits=digits, width=digits, decimal.mark=getOption("OutDec"))
   value <- sapply(seq_along(value), function(i) {
-    formatC(value[[i]], format="f", digits=max(0, value_digits[[i]]-1), decimal.mark=getOption("OutDec"))
+    if (err[[i]])
+      formatC(value[[i]], format="f", digits=max(0, value_digits[[i]]-1), decimal.mark=getOption("OutDec"))
+    else format(value[[i]])
   })
+  err <- formatC(err, format="fg", flag="#", digits=digits, width=digits, decimal.mark=getOption("OutDec"))
+  err <- sub("\\.$", "", err)
   paste(prepend, value, sep, err, append, sep="")
 }
