@@ -24,6 +24,7 @@
 #' x
 #' errors(x) <- seq(0.1, 0.3, 0.1)
 #' x
+#' # numeric values are automatically coerced to errors
 #' x^2 + x
 #' @docType package
 #' @import stats
@@ -77,11 +78,12 @@ errors_min.errors <- errors_min.numeric
 
 #' @export
 `errors<-.numeric` <- function(x, value) {
-  stopifnot(inherits(value, "numeric"))
+  stopifnot(is.numeric(value))
   stopifnot(length(value) == length(x) || length(value) == 1L)
 
   if (length(value) == 1)
     value <- rep(value, length(x))
+  value[!is.finite(x)] <- x[!is.finite(x)]
   attr(x, "errors") <- abs(value)
   class(x) <- "errors"
   x
@@ -92,10 +94,10 @@ errors_min.errors <- errors_min.numeric
 
 #' @name errors
 #' @export
-set_errors <- function(x, value) UseMethod("set_errors")
+set_errors <- function(x, value=0) UseMethod("set_errors")
 
 #' @export
-set_errors.numeric <- function(x, value) {
+set_errors.numeric <- function(x, value=0) {
   errors(x) <- value
   x
 }
@@ -109,6 +111,3 @@ as.errors <- function(x, value = 0) UseMethod("as.errors")
 
 #' @export
 as.errors.default <- function(x, value = 0) set_errors(x, value)
-
-#' @export
-as.data.frame.errors <- as.data.frame.numeric

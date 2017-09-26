@@ -1,27 +1,26 @@
 #' @export
-sum.errors <- function(..., na.rm = FALSE) {
-  err <- propagate(cbind(errors(c(...))))
-  structure(NextMethod(), "errors" = err, class = "errors")
-}
-
-#' @export
-prod.errors <- function(..., na.rm = FALSE) {
-  value <- NextMethod()
+Summary.errors <- function(..., na.rm = FALSE) {
   x <- c(...)
-  err <- propagate(cbind(errors(x) * value / .v(x)))
-  set_errors(value, err)
-}
-
-#' @export
-max.errors <- function(..., na.rm = FALSE) {
-  err <- errors(c(...))[which.max(c(...))]
-  structure(NextMethod(), "errors" = err, class = "errors")
-}
-
-#' @export
-min.errors <- function(..., na.rm = FALSE) {
-  err <- errors(c(...))[which.min(c(...))]
-  structure(NextMethod(), "errors" = err, class = "errors")
+  switch(
+    .Generic,
+    "all" = , "any" =
+      stop("method not supported for `errors` objects"),
+    "prod" = {
+      value <- NextMethod()
+      e <- propagate(cbind(errors(x) * value / .v(x)))
+      set_errors(value, e)
+    },
+    {
+      e <- switch(
+        .Generic,
+        "sum" = propagate(cbind(errors(x))),
+        "max" = errors(x)[which.max(x)],
+        "min" = errors(x)[which.min(x)],
+        "range" = c(errors(min(x)), errors(max(x)))
+      )
+      structure(NextMethod(), "errors" = e, class = "errors")
+    }
+  )
 }
 
 #' Arithmetic Mean and Median Value
@@ -43,22 +42,22 @@ min.errors <- function(..., na.rm = FALSE) {
 #'
 #' @export
 mean.errors <- function(x, ...) {
-  err <- max(mean(errors(x)), sd(.v(x))/sqrt(length(x)))
-  structure(NextMethod(), "errors" = err, class = "errors")
+  e <- max(mean(errors(x)), sd(.v(x))/sqrt(length(x)))
+  structure(NextMethod(), "errors" = e, class = "errors")
 }
 
 #' @name mean.errors
 #' @export
 weighted.mean.errors <- function(x, ...) {
-  err <- max(weighted.mean(errors(x), ...), sd(.v(x))/sqrt(length(x)))
-  structure(NextMethod(), "errors" = err, class = "errors")
+  e <- max(weighted.mean(errors(x), ...), sd(.v(x))/sqrt(length(x)))
+  structure(NextMethod(), "errors" = e, class = "errors")
 }
 
 #' @name mean.errors
 #' @export
 median.errors = function(x, ...) {
-  err <- 1.253 * errors(mean(x))
-  structure(NextMethod(), "errors" = err, class = "errors")
+  e <- 1.253 * errors(mean(x))
+  structure(NextMethod(), "errors" = e, class = "errors")
 }
 
 #' @export

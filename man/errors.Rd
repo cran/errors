@@ -25,7 +25,7 @@ errors_min(x)
 
 errors(x) <- value
 
-set_errors(x, value)
+set_errors(x, value = 0)
 
 as.errors(x, value = 0)
 }
@@ -59,6 +59,7 @@ class(x)
 x
 errors(x) <- seq(0.1, 0.3, 0.1)
 x
+# numeric values are automatically coerced to errors
 x^2 + x
 }
 \author{
