@@ -1,15 +1,24 @@
-# nocov start
+#' Generic X-Y Plotting
+#'
+#' S3 method for \code{errors} objects which automatically prints the error bars.
+#'
+#' @inheritParams graphics::plot
+#' @param ... additional arguments (see \code{\link[graphics]{plot}}).
+#'
+#' @examples
+#' cars <- as.matrix(cars)
+#' cars <- as.data.frame(set_errors(cars, cars * 0.05))
+#' plot(cars)
+#'
 #' @export
+# nocov start
 plot.errors <- function(x, y, ...) {
   if (missing(y)) {
     y <- x
     x <- seq_along(x)
   }
 
-  xlim <- c(errors_min(min(x)), errors_max(max(x)))
-  ylim <- c(errors_min(min(y)), errors_max(max(y)))
-
-  NextMethod(xlim=xlim, ylim=ylim)
+  NextMethod(xlim=range(x), ylim=range(y))
 
   if (inherits(x, "errors"))
     graphics::segments(errors_min(x), y, errors_max(x), y)

@@ -1,13 +1,37 @@
+#' S3 Group Generic Functions
+#'
+#' \code{Math}, \code{Ops} and \code{Summary} group generic methods for
+#' \code{errors} objects with support for automatic error propagation (see
+#' \code{\link[base]{groupGeneric}} for a comprehensive list of available methods).
+#'
+#' @inheritParams base::groupGeneric
+#' @name groupGeneric.errors
+#'
+#' @details \subsection{\code{Math}}{
+#' The \code{sign} method returns a numeric value without error. \code{floor},
+#' \code{ceiling}, \code{trunc}, \code{round} and \code{signif} add the rounding
+#' error to the original error. \code{lgamma}, \code{gamma}, \code{digamma} and
+#' \code{trigamma} are not implemented. The rest of the methods propagate the
+#' error as expected from the first-order Taylor series method.}
+#'
+#' @examples
+#' x <- set_errors(1:3, 0.1)
+#' exp(x)
+#' log(x)
+#' cumsum(x)
+#' cumprod(x)
+#'
 #' @export
 Math.errors <- function(x, ...) {
   switch(
     .Generic,
     "abs" = NextMethod(),
     "sign" = as.numeric(NextMethod()),
-    "sqrt" = x^0.5,
+    "sqrt" = x^set_errors(0.5),
     "floor" = , "ceiling" = , "trunc" = , "round" = , "signif" = {
       values <- .v(NextMethod())
-      set_errors(values, errors(x) + abs(.v(x) - values))
+      e <- errors(x) + abs(.v(x) - values)
+      structure(values, "errors" = e, class = "errors")
     },
     {
       e <- switch(
@@ -15,7 +39,7 @@ Math.errors <- function(x, ...) {
         "exp" = abs(errors(x) * exp(.v(x))),
         "log" = abs(errors(x) / .v(x) / log(if (missing(...)) exp(1) else c(...)[1])),
         "expm1" = abs(errors(x) * exp(.v(x))),
-        "log1p" = abs(errors(1+x) / .v(1+x)),
+        "log1p" = abs(errors(set_errors(1)+x) / .v(set_errors(1)+x)),
         "cos" = abs(errors(x) * sin(.v(x))),
         "sin" = abs(errors(x) * cos(.v(x))),
         "tan" = errors(x) / cos(.v(x))^2,
@@ -37,14 +61,14 @@ Math.errors <- function(x, ...) {
     "cumprod" = {
       values <- NextMethod()
       e <- propagate(cummatrix(errors(x)) * t(values / t(cummatrix(.v(x), fill=1))))
-      set_errors(values, e)
+      structure(values, "errors" = e, class = "errors")
     },
     "cummax" = , "cummin" = {
       values <- NextMethod()
       indexes <- which(values == .v(x))
       reps <- diff(c(indexes, length(x)+1))
       e <- rep(errors(x)[indexes], times=reps)
-      set_errors(values, e)
+      structure(values, "errors" = e, class = "errors")
     },
     "lgamma" = , "gamma" = , "digamma" = , "trigamma" =
       stop("method not supported for `errors` objects")
