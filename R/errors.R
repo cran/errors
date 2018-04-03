@@ -1,16 +1,29 @@
-#' \pkg{errors}: Error Propagation for R Vectors
+#' \pkg{errors}: Uncertainty Propagation for R Vectors
 #'
-#' Support for painless automatic error propagation in numerical operations.
+#' Support for measurement errors in R vectors, matrices and arrays: automatic
+#' uncertainty propagation and reporting.
 #' Errors are automatically propagated when you operate with \code{errors}
 #' objects, or with \code{errors} and numeric objects (then numeric values are
 #' automatically coerced to errors with zero error).
-#' \cr\cr This package treats errors as coming from Gaussian, linear and independent
+#'
+#' This package treats errors as coming from Gaussian, linear and independent
 #' sources, and propagates them using the first-order Taylor series method for
 #' propagation of uncertainty. Although the above assumptions are valid in a wide
 #' range of applications in science and engineering, the practitioner should
 #' evaluate whether they apply for each particular case.
 #'
 #' @author Iñaki Ucar
+#'
+#' @docType package
+#' @import stats
+#' @name errors-package
+NULL
+
+#' Set Measurement Errors on a Numeric Vector
+#'
+#' Set/retrieve measurement errors to/from numeric vectors.
+#'
+#' @param x a numeric object, or object of class \code{errors}.
 #'
 #' @details \code{errors} returns a vector of errors. \code{errors_max}
 #' (\code{errors_min}) returns the values plus (minus) the errors.
@@ -38,12 +51,6 @@
 #' errors_max(x)
 #' errors_min(x)
 #'
-#' @docType package
-#' @import stats
-#' @name errors
-NULL
-
-#' @param x a numeric object, or object of class \code{errors}.
 #' @export
 errors <- function(x) UseMethod("errors")
 
@@ -89,8 +96,8 @@ errors_min.errors <- errors_min.numeric
 `errors<-` <- function(x, value) UseMethod("errors<-")
 
 #' @export
-`errors<-.numeric` <- function(x, value) {
-  stopifnot(is.numeric(value))
+`errors<-.errors` <- function(x, value) {
+  if(is.null(value)) return(drop_errors(x))
   stopifnot(length(value) == length(x) || length(value) == 1L)
 
   if (length(value) == 1)
@@ -102,7 +109,10 @@ errors_min.errors <- errors_min.numeric
 }
 
 #' @export
-`errors<-.errors` <- `errors<-.numeric`
+`errors<-.numeric` <- function(x, value) {
+  if(is.null(value)) return(x)
+  `errors<-.errors`(x, value)
+}
 
 #' @name errors
 #' @export
@@ -123,3 +133,22 @@ as.errors <- function(x, value = 0) UseMethod("as.errors")
 
 #' @export
 as.errors.default <- function(x, value = 0) set_errors(x, value)
+
+#' Drop Errors
+#'
+#' @param x an \code{errors} object.
+#'
+#' @return the numeric without any \code{errors} attributes, while preserving other
+#'   attributes like dimensions or other classes.
+#'
+#' @note Equivalent to \code{errors(x) <- NULL} or \code{set_errors(x, NULL)}.
+#'
+#' @export
+drop_errors <- function(x) UseMethod("drop_errors")
+
+#' @export
+drop_errors.errors <- function(x) {
+  class(x) <- setdiff(class(x), "errors")
+  attr(x, "errors") <- NULL
+  x
+}

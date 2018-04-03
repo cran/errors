@@ -78,7 +78,7 @@ rep.errors <- function(x, ...) {
 #' c(set_errors(1, 0.2), set_errors(7:9, 0.1), 3)
 #'
 #' @export
-c.errors <- function(...) {
+c.errors <- function(..., recursive = FALSE) {
   e <- c(unlist(sapply(list(...), errors)))
   structure(NextMethod(), "errors" = e, class = "errors")
 }
@@ -141,15 +141,34 @@ as.data.frame.errors <- function(x, row.names = NULL, optional = FALSE, ...) {
   value
 }
 
-#' \code{type_sum} for Tidy \code{tibble} Printing
+#' Methods for Tidy \code{tibble} Printing
 #'
-#' S3 method for \code{errors} objects.
+#' S3 methods for \code{errors} objects.
 #'
-#' @param x object of class errors
-#' @param ... ignored
+#' @param x object of class errors.
+#' @param ... see \link[pillar]{pillar_shaft}.
 #'
+#' @name tibble
 #' @export type_sum.errors
-type_sum.errors <- function(x, ...) "errors"
+type_sum.errors <- function(x) {
+  not <- getOption("errors.notation")
+  out <- ifelse(is.null(not) || not == "parenthesis", "(err)", paste(.pm, "err"))
+  paste0("[", out, "]")
+}
+
+#' @name tibble
+#' @export pillar_shaft.errors
+pillar_shaft.errors <- function(x, ...) {
+  out <- format(x)
+  if (!requireNamespace("pillar", quietly = TRUE))
+    return(out)
+
+  not <- getOption("errors.notation")
+  sep <- ifelse(is.null(not) || not == "parenthesis", "(", " ")
+  out <- strsplit(out, "[[:space:]|\\(]")[[1]]
+  out <- paste0(out[1], pillar::style_subtle(paste0(sep, out[-1], collapse="")))
+  pillar::new_pillar_shaft_simple(out, align = "right", min_width = 8)
+}
 
 #' Coerce to a Matrix
 #'
@@ -203,7 +222,11 @@ t.errors <- function(x) {
 cbind.errors <- function(..., deparse.level = 1) {
   call <- as.character(match.call()[[1]])
   allargs <- lapply(list(...), unclass)
-  names(allargs) <- sapply(substitute(list(...))[-1], deparse)
+  nm <- names(as.list(match.call()))
+  nm <- nm[nm != "" & nm != "deparse.level"]
+  if (is.null(nm))
+    names(allargs) <- sapply(substitute(list(...))[-1], deparse)
+  else names(allargs) <- nm
   allerrs <- lapply(list(...), function(x) {
     e <- errors(x)
     dim(e) <- dim(x)

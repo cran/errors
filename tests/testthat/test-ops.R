@@ -1,25 +1,47 @@
 context("ops")
 
-test_that("bolean ops throw a warning", {
+.onLoad()
+
+test_that("bolean ops throw a warning once", {
   xval <- 1
   x <- set_errors(xval, 1)
 
   expect_warning(expect_equal(!x, !xval))
+  expect_silent(expect_equal(!x, !xval))
+  options(errors.warn.bool = TRUE)
   expect_warning(expect_equal(x & x, xval & xval))
+  expect_silent(expect_equal(x & x, xval & xval))
+  options(errors.warn.bool = TRUE)
   expect_warning(expect_equal(x | x, xval | xval))
+  expect_silent(expect_equal(x | x, xval | xval))
+  options(errors.warn.bool = TRUE)
   expect_warning(expect_equal(x == x, xval == xval))
+  expect_silent(expect_equal(x == x, xval == xval))
+  options(errors.warn.bool = TRUE)
   expect_warning(expect_equal(x != x, xval != xval))
+  expect_silent(expect_equal(x != x, xval != xval))
+  options(errors.warn.bool = TRUE)
   expect_warning(expect_equal(x < x, xval < xval))
+  expect_silent(expect_equal(x < x, xval < xval))
+  options(errors.warn.bool = TRUE)
   expect_warning(expect_equal(x > x, xval > xval))
+  expect_silent(expect_equal(x > x, xval > xval))
+  options(errors.warn.bool = TRUE)
   expect_warning(expect_equal(x <= x, xval <= xval))
+  expect_silent(expect_equal(x <= x, xval <= xval))
+  options(errors.warn.bool = TRUE)
   expect_warning(expect_equal(x >= x, xval >= xval))
+  expect_silent(expect_equal(x >= x, xval >= xval))
 })
 
 test_that("ops with numerics throw a warning", {
   x <- set_errors(1, 1)
 
   expect_warning(1 + x)
+  expect_silent(1 + x)
+  options(errors.warn.coercion = TRUE)
   expect_warning(x + 1)
+  expect_silent(x + 1)
 })
 
 test_that("ops work properly", {
@@ -42,5 +64,5 @@ test_that("ops work properly", {
   expect_true(all(errors(x / x) > 0))
   expect_equal(as.numeric(x^x), xval^xval)
   expect_equal(x %/% set_errors(3), set_errors(floor(xval/3), xerr/3))
-  expect_warning(expect_equal(x %*% x, xval %*% xval))
+  #expect_warning(expect_equal(x %*% x, xval %*% xval))
 })

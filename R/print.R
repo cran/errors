@@ -28,6 +28,7 @@ format.errors = function(x,
   stopifnot(notation %in% c("parenthesis", "plus-minus"))
   if (is.null(digits))
     digits = getOption("errors.digits", 1)
+  scipen <- getOption("scipen", 0)
   prepend <- rep("", length(x))
   append <- rep("", length(x))
 
@@ -36,7 +37,7 @@ format.errors = function(x,
   value_digits <- ifelse(e, digits - get_exponent(e), getOption("digits"))
   value <- ifelse(e, signif(.v(x), exponent + value_digits), .v(x))
 
-  cond <- (scientific | (exponent > 4 | exponent < -3)) & is.finite(e)
+  cond <- (scientific | (exponent > 4+scipen | exponent < -3-scipen)) & is.finite(e)
   e[cond] <- e[cond] * 10^(-exponent[cond])
   value[cond] <- value[cond] * 10^(-exponent[cond])
   value_digits[cond] <- digits - get_exponent(e)[cond]
@@ -47,7 +48,7 @@ format.errors = function(x,
     append[] <- ")"
     e[is.finite(e)] <- e[is.finite(e)] * 10^(pmax(0, value_digits-1))
   } else {
-    sep <- " +/- "
+    sep <- paste0(" ", .pm, " ")
     prepend[cond] <- "("
     append[cond] <- ")"
   }
@@ -83,15 +84,16 @@ format.errors = function(x,
 #' @export
 print.errors <- function(x, ...) {
   if (is.array(x) || length(x) > 1L) {
-    e <- paste(format(errors(x)[1:min(5, length(errors(x)))]), collapse=" ")
-    if (length(errors(x)) > 5L)
+    err <- attr(x, "errors")
+    e <- paste(format(err[1:min(5, length(err))]), collapse=" ")
+    if (length(err) > 5L)
       e <- paste(e, "...")
-    cat("errors: ", e, "\n", sep = "")
-    y <- unclass(x)
-    attr(y, "errors") <- NULL
-    print(y, ...)
+    cat("Errors: ", e, "\n", sep = "")
+    x <- unclass(x)
+    attr(x, "errors") <- NULL
+    NextMethod()
   } else {
     cat(format(x, ...), "\n", sep="")
+    invisible(x)
   }
-  invisible(x)
 }
