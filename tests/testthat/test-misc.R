@@ -1,5 +1,25 @@
 context("misc")
 
+test_that("equality testing checks IDs", {
+  x <- set_errors(1:10, 0.1)
+  y <- set_errors(unclass(x), errors(x))
+  z <- x
+
+  expect_false(is.null(attr(x, "id")))
+  expect_false(is.null(attr(y, "id")))
+  expect_false(is.null(attr(z, "id")))
+  expect_true(attr(x, "id") != attr(y, "id"))
+  expect_true(attr(y, "id") != attr(z, "id"))
+  expect_true(attr(z, "id") == attr(x, "id"))
+
+  expect_equal(x, y)
+  expect_equal(y, z)
+  expect_error(expect_equal(z, x))
+  expect_error(expect_identical(x, y))
+  expect_error(expect_identical(y, z))
+  expect_identical(z, x)
+})
+
 test_that("subsetting methods work properly", {
   xval <- 1.1:10.1
   xerr <- seq(0.005, 0.05, 0.005)
@@ -46,7 +66,7 @@ test_that("matrix methods work properly", {
   expect_equal(errors(xt), errors(t(xm)))
 })
 
-test_that("errors are correctly coerced to data frame", {
+test_that("errors are correctly coerced to a data frame", {
   a <- 1:10
   b <- set_errors(a, a)
 
@@ -70,6 +90,13 @@ test_that("errors are correctly coerced to data frame", {
   expect_equal(x[[2]], c(b, 2, set_errors(1, 1)))
   expect_equal(x[[3]], c(a, 3, 1))
   expect_equal(x[[4]], c(b, 4, set_errors(1, 1)))
+})
+
+test_that("errors are correctly coerced to a list", {
+  x <- set_errors(1:10, 10:1)
+  y <- as.list(x)
+  expect_is(y, "list")
+  expect_true(all(sapply(seq_along(y), function(i) all.equal(y[[i]], x[i]))))
 })
 
 test_that("bind methods work properly", {

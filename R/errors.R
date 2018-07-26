@@ -2,15 +2,31 @@
 #'
 #' Support for measurement errors in R vectors, matrices and arrays: automatic
 #' uncertainty propagation and reporting.
-#' Errors are automatically propagated when you operate with \code{errors}
-#' objects, or with \code{errors} and numeric objects (then numeric values are
-#' automatically coerced to errors with zero error).
 #'
-#' This package treats errors as coming from Gaussian, linear and independent
-#' sources, and propagates them using the first-order Taylor series method for
-#' propagation of uncertainty. Although the above assumptions are valid in a wide
-#' range of applications in science and engineering, the practitioner should
-#' evaluate whether they apply for each particular case.
+#' Every measurement has an unknown error associated. Uncertainty is the
+#' acknowledgement of that error: we are aware that our representation of reality
+#' may differ from reality itself. This package provides support for measurement
+#' errors in \R vectors, matrices and arrays. Uncertainty metadata is associated
+#' to quantity values (see \code{\link{errors}}), and this uncertainty is
+#' automatically propagated when you operate with \code{errors} objects (see
+#' \code{\link{groupGeneric.errors}}), or with \code{errors} and numeric objects
+#' (then numeric values are automatically coerced to \code{errors} objects with
+#' no uncertainty).
+#'
+#' Correlations between measurements are also supported. In particular, any
+#' operation (e.g., \code{z <- x + y}) results in a correlation between output
+#' and input variables (i.e., \code{z} is correlated to \code{x} and \code{y},
+#' even if there was no correlation between \code{x} and \code{y}). And in
+#' general, the user can establish correlations between any pair of variables
+#' (see \code{\link{correl}}).
+#'
+#' This package treats uncertainty as coming from Gaussian and linear sources
+#' (note that, even for non-Gaussian non-linear sources, this is a reasonable
+#' assumption for averages of many measurements), and propagates them using the
+#' first-order Taylor series method for propagation of uncertainty. Although the
+#' above assumptions are valid in a wide range of applications in science and
+#' engineering, the practitioner should evaluate whether they apply for each
+#' particular case.
 #'
 #' @author Iñaki Ucar
 #'
@@ -19,24 +35,26 @@
 #' @name errors-package
 NULL
 
-#' Set Measurement Errors on a Numeric Vector
+#' Handle Uncertainty on a Numeric Vector
 #'
-#' Set/retrieve measurement errors to/from numeric vectors.
+#' Set or retrieve uncertainty to/from numeric vectors.
 #'
 #' @param x a numeric object, or object of class \code{errors}.
 #'
-#' @details \code{errors} returns a vector of errors. \code{errors_max}
-#' (\code{errors_min}) returns the values plus (minus) the errors.
+#' @return \code{errors} returns a vector of uncertainty. \code{errors_max}
+#' (\code{errors_min}) returns the values plus (minus) the uncertainty.
 #'
-#' \code{`errors<-`} sets the error values (and converts \code{x} into an object
-#' of class \code{errors}). \code{set_errors} is a pipe-friendly version of
-#' \code{`errors<-`} and returns an object of class \code{errors}. \code{as.errors}
-#' is an alias for \code{set_errors}.
+#' @details \code{`errors<-`} sets the uncertainty values (and converts \code{x}
+#' into an object of class \code{errors}). \code{set_errors} is a pipe-friendly
+#' version of \code{`errors<-`} and returns an object of class \code{errors}.
+#' \code{as.errors} is an alias for \code{set_errors}.
+#'
+#' See \code{\link{correl}} on how to handle correlations between pairs of variables.
 #'
 #' @seealso
-#' \code{\link{groupGeneric.errors}}, \code{\link{mean.errors}}.
-#' \code{\link{Extract.errors}}, \code{\link{c}}, \code{\link{rep}}, \code{\link{cbind.errors}}.
-#' \code{\link{format.errors}}, \code{\link{print.errors}}, \code{\link{plot.errors}}.
+#' \code{\link{groupGeneric.errors}}, \code{\link{mean.errors}},
+#' \code{\link{Extract.errors}}, \code{\link{c}}, \code{\link{rep}}, \code{\link{cbind.errors}},
+#' \code{\link{format.errors}}, \code{\link{print.errors}}, \code{\link{plot.errors}},
 #' \code{\link{as.data.frame.errors}}, \code{\link{as.matrix.errors}}, \code{\link{t}}.
 #'
 #' @examples
@@ -67,11 +85,7 @@ errors.errors <- function(x) {
 errors_max <- function(x) UseMethod("errors_max")
 
 #' @export
-errors_max.numeric <- function(x) {
-  y <- unclass(x)
-  attr(y, "errors") <- NULL
-  y + errors(x)
-}
+errors_max.numeric <- function(x) .v(x) + errors(x)
 
 #' @export
 errors_max.errors <- errors_max.numeric
@@ -81,11 +95,7 @@ errors_max.errors <- errors_max.numeric
 errors_min <- function(x) UseMethod("errors_min")
 
 #' @export
-errors_min.numeric <- function(x) {
-  y <- unclass(x)
-  attr(y, "errors") <- NULL
-  y - errors(x)
-}
+errors_min.numeric <- function(x) .v(x) - errors(x)
 
 #' @export
 errors_min.errors <- errors_min.numeric
@@ -104,6 +114,7 @@ errors_min.errors <- errors_min.numeric
     value <- rep(value, length(x))
   value[!is.finite(x)] <- x[!is.finite(x)]
   attr(x, "errors") <- abs(value)
+  .covar(attr(x, "id"), attr(x, "id")) <- value^2
   class(x) <- "errors"
   x
 }
@@ -111,6 +122,7 @@ errors_min.errors <- errors_min.numeric
 #' @export
 `errors<-.numeric` <- function(x, value) {
   if(is.null(value)) return(x)
+  attr(x, "id") <- new_id()
   `errors<-.errors`(x, value)
 }
 
@@ -125,7 +137,8 @@ set_errors.numeric <- function(x, value=0) {
 }
 
 #' @export
-set_errors.errors <- set_errors.numeric
+set_errors.errors <- function(x, value=0)
+  set_errors.numeric(drop_errors(x), value)
 
 #' @name errors
 #' @export
@@ -134,7 +147,7 @@ as.errors <- function(x, value = 0) UseMethod("as.errors")
 #' @export
 as.errors.default <- function(x, value = 0) set_errors(x, value)
 
-#' Drop Errors
+#' Drop Uncertainty
 #'
 #' @param x an \code{errors} object.
 #'
@@ -150,5 +163,6 @@ drop_errors <- function(x) UseMethod("drop_errors")
 drop_errors.errors <- function(x) {
   class(x) <- setdiff(class(x), "errors")
   attr(x, "errors") <- NULL
+  attr(x, "id") <- NULL
   x
 }

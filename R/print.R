@@ -3,8 +3,8 @@
 #' Format an \code{errors} object for pretty printing.
 #'
 #' @param x an \code{errors} object.
-#' @param digits how many significant digits are to be used for errors. The default,
-#' \code{NULL}, uses \code{getOption("errors.digits", 1)}.
+#' @param digits how many significant digits are to be used for uncertainties.
+#' The default, \code{NULL}, uses \code{getOption("errors.digits", 1)}.
 #' @param scientific logical specifying whether the elements should be
 #' encoded in scientific format.
 #' @param notation error notation; \code{"parenthesis"} and \code{"plus-minus"}
@@ -84,13 +84,12 @@ format.errors = function(x,
 #' @export
 print.errors <- function(x, ...) {
   if (is.array(x) || length(x) > 1L) {
-    err <- attr(x, "errors")
+    err <- errors(x)
     e <- paste(format(err[1:min(5, length(err))]), collapse=" ")
     if (length(err) > 5L)
       e <- paste(e, "...")
     cat("Errors: ", e, "\n", sep = "")
-    x <- unclass(x)
-    attr(x, "errors") <- NULL
+    x <- drop_errors(x)
     NextMethod()
   } else {
     cat(format(x, ...), "\n", sep="")
