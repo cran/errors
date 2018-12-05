@@ -2,15 +2,10 @@
 % Please edit documentation in R/correl.R
 \name{correl}
 \alias{correl}
-\alias{correl}
 \alias{correl<-}
-\alias{correl}
 \alias{set_correl}
-\alias{correl}
 \alias{covar}
-\alias{correl}
 \alias{covar<-}
-\alias{correl}
 \alias{set_covar}
 \title{Handle Correlations Between \code{errors} Objects}
 \usage{
@@ -66,20 +61,20 @@ arithmetic operations propagate correlations, where appropriate, following
 the Taylor series method.
 }
 \examples{
-V   <- with(GUM.H.2, set_errors(mean(V),   sd(V)   / sqrt(length(V))))
-I   <- with(GUM.H.2, set_errors(mean(I),   sd(I)   / sqrt(length(I))))
-phi <- with(GUM.H.2, set_errors(mean(phi), sd(phi) / sqrt(length(phi))))
+x <- set_errors(1:5, 0.1)
+y <- set_errors(1:5, 0.1)
 
-correl(V, I)   <- with(GUM.H.2, cor(V, I))
-correl(V, phi) <- with(GUM.H.2, cor(V, phi))
-correl(I, phi) <- with(GUM.H.2, cor(I, phi))
+# Self-correlation is of course 1, and cannot be changed
+correl(x, x)
+\dontrun{
+correl(x, x) <- 0.5}
 
-(R <- (V / I) * cos(phi))
-(X <- (V / I) * sin(phi))
-(Z <- (V / I))
-
-correl(R, X)
-correl(R, Z)
-correl(X, Z)
+# Cross-correlation can be set, but must be a value between -1 and 1
+correl(x, y)
+\dontrun{
+correl(x, y) <- 1.5}
+correl(x, y) <- runif(length(x))
+correl(x, y)
+covar(x, y)
 
 }

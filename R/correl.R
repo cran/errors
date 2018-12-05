@@ -1,30 +1,37 @@
 # Hash table of covariances
 ht <- new.env(parent = emptyenv())
 
-#' @importFrom uuid UUIDgenerate
-# Each UUID carries an associated environment with a finalizer registered.
-# This environment acts as a reference counter: when all copies are removed,
-# the finalizer is called by the GC and the correlations are cleaned up.
-new_id <- function() {
-  id <- UUIDgenerate()
-  env <- new.env(parent = emptyenv())
-  env[["id"]] <- id
-  reg.finalizer(env, function(x) {
-    if (x[["id"]] %in% ls(ht)) {
-      for (var in ls(ht[[x[["id"]]]]))
-        rm(list = x[["id"]], pos = ht[[var]])
-      rm(list = x[["id"]], pos = ht)
-    }
-  })
-  environment(id) <- env
+.id <- function(id) {
+  if (is.environment(id))
+    id <- format(id)
   id
 }
 
+# Each ID is a new empty environment with a finalizer registered.
+# This environment acts as a reference counter: when all copies are removed,
+# the finalizer is called by the GC and the correlations are cleaned up.
+new_id <- function() {
+  env <- new.env(parent = emptyenv())
+  reg.finalizer(env, function(x) {
+    id <- .id(x)
+    if (id %in% ls(ht)) {
+      for (var in ls(ht[[id]]))
+        rm(list = id, pos = ht[[var]])
+      rm(list = id, pos = ht)
+    }
+  })
+  env
+}
+
 # Get a covariance; ht[[idy]][[idx]] would return the same result.
-.covar <- function(idx, idy) ht[[idx]][[idy]]
+.covar <- function(idx, idy) ht[[.id(idx)]][[.id(idy)]]
 
 # Store a covariance in the hash table.
 `.covar<-` <- function(idx, idy, value) {
+  ret <- idx
+  idx <- .id(idx)
+  idy <- .id(idy)
+
   if (is.null(ht[[idx]]))
     ht[[idx]] <- new.env(parent = emptyenv())
   if (is.null(ht[[idy]]))
@@ -32,10 +39,12 @@ new_id <- function() {
 
   ht[[idx]][[idy]] <- value
   ht[[idy]][[idx]] <- ht[[idx]][[idy]]
-  idx
+
+  ret
 }
 
 ids <- function(id) {
+  id <- .id(id)
   if (id %in% ls(ht)) ls(ht[[id]])
   else NULL
 }
@@ -76,21 +85,21 @@ ids <- function(id) {
 #' the Taylor series method.
 #'
 #' @examples
-#' V   <- with(GUM.H.2, set_errors(mean(V),   sd(V)   / sqrt(length(V))))
-#' I   <- with(GUM.H.2, set_errors(mean(I),   sd(I)   / sqrt(length(I))))
-#' phi <- with(GUM.H.2, set_errors(mean(phi), sd(phi) / sqrt(length(phi))))
+#' x <- set_errors(1:5, 0.1)
+#' y <- set_errors(1:5, 0.1)
 #'
-#' correl(V, I)   <- with(GUM.H.2, cor(V, I))
-#' correl(V, phi) <- with(GUM.H.2, cor(V, phi))
-#' correl(I, phi) <- with(GUM.H.2, cor(I, phi))
+#' # Self-correlation is of course 1, and cannot be changed
+#' correl(x, x)
+#' \dontrun{
+#' correl(x, x) <- 0.5}
 #'
-#' (R <- (V / I) * cos(phi))
-#' (X <- (V / I) * sin(phi))
-#' (Z <- (V / I))
-#'
-#' correl(R, X)
-#' correl(R, Z)
-#' correl(X, Z)
+#' # Cross-correlation can be set, but must be a value between -1 and 1
+#' correl(x, y)
+#' \dontrun{
+#' correl(x, y) <- 1.5}
+#' correl(x, y) <- runif(length(x))
+#' correl(x, y)
+#' covar(x, y)
 #'
 #' @export
 correl <- function(x, y) UseMethod("correl")
@@ -141,7 +150,7 @@ covar.errors <- function(x, y) {
 `covar<-.errors` <- function(x, y, value) {
   stopifnot(inherits(y, "errors"))
   stopifnot(length(x) == length(y))
-  stopifnot(attr(x, "id") != attr(y, "id"))
+  stopifnot(!identical(attr(x, "id"), attr(y, "id")))
   stopifnot(length(value) == length(x) || length(value) == 1L)
   stopifnot(value / errors(x) / errors(y) >= -1,
             value / errors(x) / errors(y) <= 1)

@@ -10,8 +10,16 @@
 #'   \item{I}{Current amplitude, in Amperes.}
 #'   \item{phi}{Phase-shift angle of the voltage relative to the current, in radians.}
 #' }
+#' \code{GUM.H.3}, from Section 3 of Annex H (Table H.6), provides
+#' thermometer readings and observed corrections to obtain a linear calibration
+#' curve for some reference temperature. It is a data frame with 11 rows and
+#' 2 variables:
+#' \describe{
+#'   \item{tk}{Thermometer reading, in Celsius degrees.}
+#'   \item{bk}{Observed correction, in Celsius degrees.}
+#' }
 #'
-#' @seealso See \code{\link{correl}} for examples.
+#' @seealso See \code{\link{errors-package}} for examples.
 #'
 #' @source BIPM, IEC, IFCC, ILAC, IUPAC, IUPAP, ISO, and OIML (2008).
 #' Evaluation of Measurement Data -- Guide to the Expression of Uncertainty in
@@ -21,3 +29,6 @@
 #'
 #' @name datasets
 "GUM.H.2"
+
+#' @name datasets
+"GUM.H.3"
