@@ -71,6 +71,11 @@ covar(y1, y2) <- vcov(fit)[1, 2]
 (b.30 <- y1 + y2 * set_errors(30 - 20))
 
 }
+\references{
+Iñaki Ucar, Edzer Pebesma and Arturo Azcorra (2018).
+Measurement Errors in \R. \emph{The R Journal}, 10(2), 549-557.
+\doi{10.32614/RJ-2018-075}
+}
 \seealso{
 \code{\link{datasets}} for a description of the datasets used in the
 examples below.

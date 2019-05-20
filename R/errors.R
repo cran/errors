@@ -30,6 +30,10 @@
 #'
 #' @author Iñaki Ucar
 #'
+#' @references Iñaki Ucar, Edzer Pebesma and Arturo Azcorra (2018).
+#' Measurement Errors in \R. \emph{The R Journal}, 10(2), 549-557.
+#' \doi{10.32614/RJ-2018-075}
+#'
 #' @docType package
 #' @import stats
 #' @name errors-package
@@ -155,7 +159,7 @@ errors_min.errors <- errors_min.numeric
 #' @export
 `errors<-.errors` <- function(x, value) {
   if(is.null(value)) return(drop_errors(x))
-  stopifnot(length(value) == length(x) || length(value) == 1L)
+  stopifnot(any(length(value) == c(length(x), 1L)))
 
   if (length(value) == 1)
     value <- rep(value, length(x))
