@@ -19,22 +19,14 @@
 #' @export
 Ops.errors <- function(e1, e2) {
   if (.Generic %in% c("&", "|", "!", "==", "!=", "<", ">", "<=", ">=")) {
-    warn_once(
-      "boolean operators not defined for 'errors' objects, uncertainty dropped",
-      fun = .Generic,
-      type = "bool"
-    )
+    warn_once_bool(.Generic)
     return(NextMethod())
   }
 
   if (!missing(e2)) {
     coercion <- cond2int(!inherits(e1, "errors"), !inherits(e2, "errors"))
     if (coercion) {
-      warn_once(
-        "non-'errors' operand automatically coerced to an 'errors' object with no uncertainty",
-        fun = "Ops",
-        type = "coercion"
-      )
+      warn_once_coercion("Ops")
       switch(coercion, e1<-set_errors(e1), e2<-set_errors(e2))
     }
   }

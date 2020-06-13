@@ -1,11 +1,5 @@
 .pm <- enc2native(intToUtf8(177))
 
-.onLoad <- function(libname, pkgname) {
-  types <- c("bool", "coercion", "matmult")
-  types <- paste0("errors.warn.", types)
-  options(as.list(setNames(rep.int(TRUE, length(types)), types)))
-}
-
 warn_once <- function(message, fun, type) {
   type <- paste0("errors.warn.", type)
   if (getOption(type)) {
@@ -13,6 +7,18 @@ warn_once <- function(message, fun, type) {
     warning("In '", fun, "' : ", message, call. = FALSE)
   }
 }
+
+warn_once_bool <- function(fun) warn_once(
+  "boolean operators not defined for 'errors' objects, uncertainty dropped",
+  fun = fun,
+  type = "bool"
+)
+
+warn_once_coercion <- function(fun) warn_once(
+  "non-'errors' operand automatically coerced to an 'errors' object with no uncertainty",
+  fun = "Ops",
+  type = "coercion"
+)
 
 .v <- function(x) as.numeric(x)
 
