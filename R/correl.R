@@ -32,25 +32,24 @@ reg_finalizer <- function(env) {
 }
 
 # Get a covariance; ht[[idy]][[idx]] would return the same result.
-.covar <- function(idx, idy) ht[[.id(idx)]][[.id(idy)]]
+.covar <- function(x, y) ht[[.id(x)]][[.id(y)]]
 
 # Store a covariance in the hash table and register finalizers.
-`.covar<-` <- function(idx, idy, value) {
-  reg_finalizer(idx)
-  reg_finalizer(idy)
-  ret <- idx
-  idx <- .id(idx)
-  idy <- .id(idy)
+`.covar<-` <- function(x, y, value) {
+  idx <- .id(x)
+  idy <- .id(y)
 
   if (is.null(ht[[idx]]))
     ht[[idx]] <- new.env(parent = emptyenv())
   if (is.null(ht[[idy]]))
     ht[[idy]] <- new.env(parent = emptyenv())
 
-  ht[[idx]][[idy]] <- value
-  ht[[idy]][[idx]] <- ht[[idx]][[idy]]
+  ht[[idx]][[idy]] <- ht[[idy]][[idx]] <- value
 
-  ret
+  reg_finalizer(x)
+  reg_finalizer(y)
+
+  x
 }
 
 ids <- function(...) {
@@ -59,6 +58,10 @@ ids <- function(...) {
     if (id %in% ls(ht)) ls(ht[[id]])
     else NULL
   })))
+}
+
+is_correlation <- function(x) {
+  abs(x) <= 1 | sapply(abs(x), function(i) isTRUE(all.equal(i, 1)))
 }
 
 #' Handle Correlations Between \code{errors} Objects
@@ -130,7 +133,7 @@ correl.errors <- function(x, y) {
 
 #' @export
 `correl<-.errors` <- function(x, y, value) {
-  stopifnot(abs(value) <= 1)
+  stopifnot(is_correlation(value))
   covar(x, y) <- value * errors(x) * errors(y)
   x
 }
@@ -167,7 +170,7 @@ covar.errors <- function(x, y) {
 `covar<-.errors` <- function(x, y, value) {
   stopifnot(inherits(y, "errors"), !identical(attr(x, "id"), attr(y, "id")))
   stopifnot(length(x) == length(y), any(length(value) == c(length(x), 1L)))
-  stopifnot(abs(value / errors(x) / errors(y)) <= 1)
+  stopifnot(is_correlation(value / errors(x) / errors(y)))
 
   if (length(value) == 1)
     value <- rep(value, length(x))
