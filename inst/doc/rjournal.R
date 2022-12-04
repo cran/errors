@@ -56,15 +56,13 @@ iris.e[1:4] <- lapply(iris.e[1:4], function(x) set_errors(x, x*0.02))
 head(iris.e, 3)
 
 ## ---- eval=FALSE--------------------------------------------------------------
-#  plot(iris.e[["Sepal.Length"]], iris.e[["Sepal.Width"]], col=iris.e[["Species"]])
+#  plot(Sepal.Width ~ Sepal.Length, iris.e, col=Species)
 #  legend(6.2, 4.4, unique(iris.e[["Species"]]), col=1:length(iris.e[["Species"]]), pch=1)
 #  
 #  library(ggplot2)
 #  
-#  ggplot(iris.e, aes(Sepal.Length, Sepal.Width, color=Species)) +
-#    geom_point() + theme_bw() + theme(legend.position=c(0.6, 0.8)) +
-#    geom_errorbar(aes(ymin=errors_min(Sepal.Width), ymax=errors_max(Sepal.Width))) +
-#    geom_errorbarh(aes(xmin=errors_min(Sepal.Length), xmax=errors_max(Sepal.Length)))
+#  ggplot(iris.e) + aes(Sepal.Length, Sepal.Width, color=Species) +
+#    geom_point() + geom_errors() + theme_bw() + theme(legend.position=c(0.6, 0.8))
 
 ## ----plot, echo=FALSE, out.width='100%', fig.cap='Base plot with error bars (left) and \\pkg{ggplot2}\'s version (right).\\label{plot}'----
 knitr::include_graphics("includes/rjournal-plot.pdf")

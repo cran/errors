@@ -2,9 +2,10 @@
 #'
 #' S3 operators to extract or replace parts of \code{errors} objects.
 #'
-#' @inheritParams base::Extract
+#' @param x object from which to extract element(s) or in which to replace element(s).
 #' @param ... additional arguments to be passed to base methods
 #' (see \code{\link[base]{Extract}}).
+#' @param value typically an array-like \R object of a similar class as \code{x}.
 #' @name Extract.errors
 #'
 #' @examples
@@ -18,7 +19,7 @@
 #'
 #' @export
 `[.errors` <- function(x, ...) {
-  e <- errors(x)
+  e <- .e(x)
   dim(e) <- dim(x)
   set_errors(unclass(NextMethod()), as.numeric(e[...]))
 }
@@ -26,7 +27,7 @@
 #' @rdname Extract.errors
 #' @export
 `[[.errors` <- function(x, ...) {
-  e <- errors(x)
+  e <- .e(x)
   dim(e) <- dim(x)
   set_errors(unclass(NextMethod()), as.numeric(e[[...]]))
 }
@@ -34,18 +35,18 @@
 #' @rdname Extract.errors
 #' @export
 `[<-.errors` <- function(x, ..., value) {
-  e <- errors(x)
+  e <- .e(x)
   dim(e) <- dim(x)
-  e[...] <- errors(value)
+  e[...] <- .e(value)
   set_errors(unclass(NextMethod()), as.numeric(e))
 }
 
 #' @rdname Extract.errors
 #' @export
 `[[<-.errors` <- function(x, ..., value) {
-  e <- errors(x)
+  e <- .e(x)
   dim(e) <- dim(x)
-  e[[...]] <- errors(value)
+  e[[...]] <- .e(value)
   set_errors(unclass(NextMethod()), as.numeric(e))
 }
 
@@ -60,7 +61,7 @@
 #'
 #' @export
 rep.errors <- function(x, ...)
-  set_errors(unclass(NextMethod()), rep(errors(x), ...))
+  set_errors(unclass(NextMethod()), rep(.e(x), ...))
 
 #' Combine Values into a Vector or List
 #'
@@ -73,7 +74,7 @@ rep.errors <- function(x, ...)
 #'
 #' @export
 c.errors <- function(..., recursive = FALSE)
-  set_errors(unclass(NextMethod()), c(unlist(sapply(list(...), errors))))
+  set_errors(unclass(NextMethod()), c(unlist(sapply(list(...), .e))))
 
 #' Lagged Differences
 #'
@@ -122,7 +123,7 @@ diff.errors <- function(x, lag = 1L, differences = 1L, ...) {
 #'
 #' @export
 as.data.frame.errors <- function(x, row.names = NULL, optional = FALSE, ...) {
-  e <- errors(x)
+  e <- .e(x)
   dim(e) <- dim(x)
   e <- as.data.frame(e)
   xx <- as.data.frame(unclass(x), row.names, optional, ...)
@@ -145,7 +146,7 @@ as.data.frame.errors <- function(x, row.names = NULL, optional = FALSE, ...) {
 #'
 #' @export
 as.list.errors <- function(x, ...)
-  Map(set_errors, unclass(x), errors(x))
+  Map(set_errors, unclass(x), .e(x))
 
 #' Coerce to a Matrix
 #'
@@ -158,7 +159,7 @@ as.list.errors <- function(x, ...)
 #'
 #' @export
 as.matrix.errors <- function(x, ...)
-  set_errors(unclass(NextMethod()), errors(x))
+  set_errors(unclass(NextMethod()), .e(x))
 
 #' Matrix Transpose
 #'
@@ -173,7 +174,7 @@ as.matrix.errors <- function(x, ...)
 #'
 #' @export
 t.errors <- function(x) {
-  e <- errors(x)
+  e <- .e(x)
   dim(e) <- dim(x)
   set_errors(unclass(NextMethod()), as.numeric(t(e)))
 }
@@ -205,7 +206,7 @@ cbind.errors <- function(..., deparse.level = 1) {
     names(allargs) <- sapply(substitute(list(...))[-1], deparse)
   else names(allargs) <- nm
   allerrs <- lapply(list(...), function(x) {
-    e <- errors(x)
+    e <- .e(x)
     dim(e) <- dim(x)
     e
   })
@@ -243,4 +244,34 @@ str.errors <- function(object, ...) {
   sink()
   close(file)
   cat(" Errors:", sub(" 'errors' ", "", rval), "\n")
+}
+
+#' @export
+duplicated.errors <- function(x, incomparables=FALSE, ...) {
+  dx <- dim(x)
+  dval <- if (is.null(dx))
+    NextMethod() else duplicated.array(x, incomparables, ...)
+  x <- .e(x)
+  dim(x) <- dx
+  derr <- if (is.null(dx))
+    NextMethod() else duplicated.array(x, incomparables, ...)
+  dval & derr
+}
+
+#' @export
+anyDuplicated.errors <- function(x, incomparables=FALSE, ...) {
+  if (any(dup <- duplicated(x, incomparables, ...)))
+    which(dup)[1] else 0
+}
+
+#' @export
+unique.errors <- function(x, incomparables=FALSE, MARGIN=1, ...) {
+  dup <- duplicated(x, incomparables, ...)
+  if (is.null(dim(x)))
+    return(x[!dup])
+  # for matrices and arrays
+  args <- rep(alist(a = ), length(dim(x)))
+  names(args) <- NULL
+  args[[MARGIN]] <- !dup
+  do.call("[", c(list(x), args, list(drop = FALSE)))
 }

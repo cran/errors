@@ -7,12 +7,7 @@
 \method{plot}{errors}(x, y, ...)
 }
 \arguments{
-\item{x}{the \code{x} and \code{y} arguments provide the x and y
-    coordinates for the plot.  Any reasonable way of defining the
-    coordinates is acceptable.  See the function \code{\link{xy.coords}}
-    for details.  If supplied separately, they must be of the same length.}
-
-\item{y}{the \code{x} and \code{y} arguments provide the x and y
+\item{x, y}{the \code{x} and \code{y} arguments provide the x and y
     coordinates for the plot.  Any reasonable way of defining the
     coordinates is acceptable.  See the function \code{\link{xy.coords}}
     for details.  If supplied separately, they must be of the same length.}
@@ -25,6 +20,7 @@ S3 method for \code{errors} objects which automatically prints the error bars.
 \examples{
 cars <- as.matrix(cars)
 cars <- as.data.frame(set_errors(cars, cars * 0.05))
+plot(cars$speed)
 plot(cars)
 
 }
