@@ -125,13 +125,10 @@ diff.errors <- function(x, lag = 1L, differences = 1L, ...) {
 as.data.frame.errors <- function(x, row.names = NULL, optional = FALSE, ...) {
   e <- .e(x)
   dim(e) <- dim(x)
-  e <- as.data.frame(e)
   xx <- as.data.frame(unclass(x), row.names, optional, ...)
   if (!optional && ncol(xx) == 1)
     colnames(xx) <- deparse(substitute(x))
-  for (i in seq_len(ncol(xx)))
-    errors(xx[[i]]) <- e[[i]]
-  xx
+  df2apply(xx, as.data.frame(e), set_errors)
 }
 
 #' Coerce to a List
@@ -275,3 +272,15 @@ unique.errors <- function(x, incomparables=FALSE, MARGIN=1, ...) {
   args[[MARGIN]] <- !dup
   do.call("[", c(list(x), args, list(drop = FALSE)))
 }
+
+#' @export
+na.omit.errors <- function(object, ...) {
+  object[is.na(errors(object))] <- NA
+  NextMethod()
+}
+
+#' @export
+na.fail.errors <- na.omit.errors
+
+#' @export
+na.exclude.errors <- na.omit.errors
