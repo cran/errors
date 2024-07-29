@@ -5,11 +5,16 @@
 #' @param x an \code{errors} object.
 #' @param digits how many significant digits are to be used for uncertainties.
 #' The default, \code{NULL}, uses \code{getOption("errors.digits", 1)}.
+#' Use \code{digits="pdg"} to choose an appropriate number of digits for each
+#' value according to the Particle Data Group rounding rule (see references).
 #' @param scientific logical specifying whether the elements should be
 #' encoded in scientific format.
 #' @param notation error notation; \code{"parenthesis"} and \code{"plus-minus"}
 #' are supported through the \code{"errors.notation"} option.
 #' @param ... ignored.
+#'
+#' @references
+#' K. Nakamura et al. (Particle Data Group), J. Phys. G 37, 075021 (2010)
 #'
 #' @examples
 #' x <- set_errors(1:3*100, 1:3*100 * 0.05)
@@ -17,6 +22,9 @@
 #' format(x, digits=2)
 #' format(x, scientific=TRUE)
 #' format(x, notation="plus-minus")
+#'
+#' x <- set_errors(c(0.827, 0.827), c(0.119, 0.367))
+#' format(x, notation="plus-minus", digits="pdg")
 #'
 #' @export
 format.errors = function(x,
@@ -26,22 +34,28 @@ format.errors = function(x,
                          ...)
 {
   stopifnot(notation %in% c("parenthesis", "plus-minus"))
+
   if (is.null(digits))
-    digits = getOption("errors.digits", 1)
+    digits <- getOption("errors.digits", 1)
+  digits <- if (digits == "pdg") digits_pdg(.e(x)) else rep(digits, length(x))
+
   scipen <- getOption("scipen", 0)
   prepend <- rep("", length(x))
   append <- rep("", length(x))
 
   e <- signif(.e(x), digits)
-  exponent <- get_exponent(x)
-  value_digits <- ifelse(e, digits - get_exponent(e), getOption("digits"))
-  value <- ifelse(e, signif(.v(x), exponent + value_digits), .v(x))
+  nulle <- e == 0 & !is.na(e)
+  xexp <- ifelse(.v(x) == 0, get_exponent(e) + 1, get_exponent(x))
+  value_digits <- ifelse(e, digits - get_exponent(e), digits)
+  value <- ifelse(e, signif(.v(x), xexp + value_digits), .v(x))
+  value <- ifelse(is.finite(value), value, .v(x))
 
-  cond <- (scientific | (exponent > 4+scipen | exponent < -3-scipen)) & is.finite(e)
-  e[cond] <- e[cond] * 10^(-exponent[cond])
-  value[cond] <- value[cond] * 10^(-exponent[cond])
-  value_digits[cond] <- digits - get_exponent(e)[cond]
-  value_digits[is.infinite(value_digits)] <- 0
+  cond <- (scientific | (xexp > 4+scipen | xexp < -3-scipen)) & is.finite(e)
+  e[cond] <- e[cond] * 10^(-xexp[cond])
+  value[cond] <- value[cond] * 10^(-xexp[cond])
+  value_digits[cond] <- digits[cond] - get_exponent(e)[cond]
+  value_digits[!is.finite(value_digits)] <- 0
+  value_digits[nulle] <- getOption("digits", 7)
 
   if (notation == "parenthesis") {
     sep <- "("
@@ -52,17 +66,22 @@ format.errors = function(x,
     prepend[cond] <- "("
     append[cond] <- ")"
   }
-  append[cond] <- paste(append[cond], "e", exponent[cond], sep="")
+  append[cond] <- paste(append[cond], "e", xexp[cond], sep="")
 
   value <- sapply(seq_along(value), function(i) {
-    if (!is.finite(e[[i]]))
-      format(.v(x)[[i]])
-    else if (e[[i]])
-      formatC(value[[i]], format="f", digits=max(0, value_digits[[i]]-1), decimal.mark=getOption("OutDec"))
-    else format(value[[i]])
+    formatC(value[[i]], format="f",
+            digits=max(0, value_digits[[i]]-1),
+            decimal.mark=getOption("OutDec"))
   })
-  e <- formatC(e, format="fg", flag="#", digits=digits, width=digits, decimal.mark=getOption("OutDec"))
+  value[nulle] <- prettyNum(value[nulle], drop0trailing=TRUE)
+
+  e <- sapply(seq_along(digits), function(i) {
+    formatC(e[[i]], format="fg", flag="#",
+            digits=digits[[i]], width=max(1, digits[[i]]),
+            decimal.mark=getOption("OutDec"))
+  })
   e <- sub("\\.$", "", e)
+
   paste(prepend, value, sep, e, append, sep="")
 }
 
