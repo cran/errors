@@ -36,9 +36,9 @@ label <- function(x) {
 }
 
 ## ----echo=FALSE, eval=knitr::is_html_output(), results='asis'-----------------
-#  cat('<div style="display:none">',
-#      '$\\newcommand{\\E}{\\mathbb{E}}$',
-#      '</div>', sep="\n")
+# cat('<div style="display:none">',
+#     '$\\newcommand{\\E}{\\mathbb{E}}$',
+#     '</div>', sep="\n")
 
 ## ----propagation, echo=FALSE, out.width='50%', fig.cap=paste0(label("fig:propagation"), "Illustration of linearity in an interval $\\pm$ one standard deviation around the mean."), fig.height=3.7, fig.width=4.5, fig.align='center'----
 library(ggplot2)
@@ -109,14 +109,14 @@ iris.e[1:4] <- lapply(iris.e[1:4], function(x) set_errors(x, x*0.02))
 head(iris.e)
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  plot(Sepal.Width ~ Sepal.Length, iris.e, col=Species)
-#  legend(6.2, 4.4, unique(iris.e[["Species"]]),
-#         col=1:length(iris.e[["Species"]]), pch=1)
-#  
-#  library(ggplot2)
-#  
-#  ggplot(iris.e) + aes(Sepal.Length, Sepal.Width, color=Species) +
-#    geom_point() + geom_errors() + theme_bw() + theme(legend.position=c(0.6, 0.8))
+# plot(Sepal.Width ~ Sepal.Length, iris.e, col=Species)
+# legend(6.2, 4.4, unique(iris.e[["Species"]]),
+#        col=1:length(iris.e[["Species"]]), pch=1)
+# 
+# library(ggplot2)
+# 
+# ggplot(iris.e) + aes(Sepal.Length, Sepal.Width, color=Species) +
+#   geom_point() + geom_errors() + theme_bw() + theme(legend.position=c(0.6, 0.8))
 
 ## ----plot, echo=FALSE, out.width='100%', fig.height=3.5, fig.width=10, fig.cap=paste0(label("fig:plot"), "Base plot with error bars (left) and ggplot2's version (right).")----
 par(mfrow=c(1, 2), mar=c(2.4, 2, 0.4, 1))
@@ -182,5 +182,5 @@ iris.e.agg <- aggregate(. ~ Species, data = iris.e, mean, simplify=FALSE)
 as.data.frame(lapply(iris.e.agg, unlist), col.names=colnames(iris.e.agg))
 
 ## ----echo=FALSE, eval=knitr::is_html_output(), results='asis'-----------------
-#  cat('# References')
+# cat('# References')
 
