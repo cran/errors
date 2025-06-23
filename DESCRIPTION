@@ -1,7 +1,7 @@
 Package: errors
 Type: Package
 Title: Uncertainty Propagation for R Vectors
-Version: 0.4.3
+Version: 0.4.4
 Authors@R: c(
     person("Iñaki", "Ucar", email="iucar@fedoraproject.org",
       role=c("aut", "cph", "cre"), comment=c(ORCID="0000-0001-6403-5550")),
@@ -20,14 +20,15 @@ BugReports: https://github.com/r-quantities/errors/issues
 LazyData: true
 Depends: R (>= 3.0.0)
 Suggests: dplyr (>= 1.0.0), vctrs (>= 0.5.0), pillar, ggplot2 (>=
-        3.4.0), testthat, vdiffr, knitr, rmarkdown
+        3.5.0), testthat, vdiffr, knitr, rmarkdown
 RoxygenNote: 7.3.2
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2025-01-18 17:57:06 UTC; iucar
-Author: Iñaki Ucar [aut, cph, cre] (<https://orcid.org/0000-0001-6403-5550>),
+Packaged: 2025-06-23 10:59:46 UTC; iucar
+Author: Iñaki Ucar [aut, cph, cre] (ORCID:
+    <https://orcid.org/0000-0001-6403-5550>),
   Lionel Henry [ctb],
   RStudio [cph] (Copyright for code written by RStudio employees.)
 Maintainer: Iñaki Ucar <iucar@fedoraproject.org>
 Repository: CRAN
-Date/Publication: 2025-01-18 18:10:05 UTC
+Date/Publication: 2025-06-23 12:10:02 UTC

@@ -1,3 +1,9 @@
+# errors 0.4.4
+
+- Improve `cbind` arg name deparsing.
+- Switch from `geom_errobarh()` (deprecated) to `geom_errorbar()` with flipped
+  aesthetics in `geom_errors()` (#63).
+
 # errors 0.4.3
 
 - Add option `decimals` to `format()` method to add support for uncertainty with

@@ -116,7 +116,8 @@ head(iris.e)
 # library(ggplot2)
 # 
 # ggplot(iris.e) + aes(Sepal.Length, Sepal.Width, color=Species) +
-#   geom_point() + geom_errors() + theme_bw() + theme(legend.position=c(0.6, 0.8))
+#   geom_point() + geom_errors() + theme_bw() +
+#   theme(legend.position="inside", legend.position.inside=c(0.6, 0.8))
 
 ## ----plot, echo=FALSE, out.width='100%', fig.height=3.5, fig.width=10, fig.cap=paste0(label("fig:plot"), "Base plot with error bars (left) and ggplot2's version (right).")----
 par(mfrow=c(1, 2), mar=c(2.4, 2, 0.4, 1))
@@ -128,7 +129,8 @@ legend(6.2, 4.4, unique(iris.e[["Species"]]),
 library(ggplot2)
 
 p <- ggplot(iris.e) + aes(Sepal.Length, Sepal.Width, color=Species) +
-  geom_point() + geom_errors() + theme_bw() + theme(legend.position=c(0.6, 0.8))
+  geom_point() + geom_errors() + theme_bw() +
+  theme(legend.position="inside", legend.position.inside=c(0.6, 0.8))
 
 plot.new()
 fig <- par("fig")
